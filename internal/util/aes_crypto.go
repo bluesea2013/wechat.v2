@@ -7,23 +7,23 @@ import (
 )
 
 // 把整数 n 格式化成 4 字节的网络字节序
-func encodeNetworkByteOrder(orderBytes []byte, n uint32) {
-	orderBytes[0] = byte(n >> 24)
-	orderBytes[1] = byte(n >> 16)
-	orderBytes[2] = byte(n >> 8)
-	orderBytes[3] = byte(n)
+func encodeNetworkByteOrder(b []byte, n uint32) {
+	b[0] = byte(n >> 24)
+	b[1] = byte(n >> 16)
+	b[2] = byte(n >> 8)
+	b[3] = byte(n)
 }
 
 // 从 4 字节的网络字节序里解析出整数
-func decodeNetworkByteOrder(orderBytes []byte) (n uint32) {
-	return uint32(orderBytes[0])<<24 |
-		uint32(orderBytes[1])<<16 |
-		uint32(orderBytes[2])<<8 |
-		uint32(orderBytes[3])
+func decodeNetworkByteOrder(b []byte) (n uint32) {
+	return uint32(b[0])<<24 |
+		uint32(b[1])<<16 |
+		uint32(b[2])<<8 |
+		uint32(b[3])
 }
 
 // ciphertext = AES_Encrypt[random(16B) + msg_len(4B) + rawXMLMsg + appId]
-func AESEncryptMsg(random, rawXMLMsg []byte, appId string, aesKey [32]byte) (ciphertext []byte) {
+func AESEncryptMsg(random, rawXMLMsg []byte, appId string, aesKey []byte) (ciphertext []byte) {
 	const (
 		BLOCK_SIZE = 32             // PKCS#7
 		BLOCK_MASK = BLOCK_SIZE - 1 // BLOCK_SIZE 为 2^n 时, 可以用 mask 获取针对 BLOCK_SIZE 的余数
@@ -48,7 +48,7 @@ func AESEncryptMsg(random, rawXMLMsg []byte, appId string, aesKey [32]byte) (cip
 	}
 
 	// 加密
-	block, err := aes.NewCipher(aesKey[:])
+	block, err := aes.NewCipher(aesKey)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +60,7 @@ func AESEncryptMsg(random, rawXMLMsg []byte, appId string, aesKey [32]byte) (cip
 }
 
 // ciphertext = AES_Encrypt[random(16B) + msg_len(4B) + rawXMLMsg + appId]
-func AESDecryptMsg(ciphertext []byte, aesKey [32]byte) (random, rawXMLMsg, appId []byte, err error) {
+func AESDecryptMsg(ciphertext []byte, aesKey []byte) (random, rawXMLMsg, appId []byte, err error) {
 	const (
 		BLOCK_SIZE = 32             // PKCS#7
 		BLOCK_MASK = BLOCK_SIZE - 1 // BLOCK_SIZE 为 2^n 时, 可以用 mask 获取针对 BLOCK_SIZE 的余数
@@ -78,7 +78,7 @@ func AESDecryptMsg(ciphertext []byte, aesKey [32]byte) (random, rawXMLMsg, appId
 	plaintext := make([]byte, len(ciphertext)) // len(plaintext) >= BLOCK_SIZE
 
 	// 解密
-	block, err := aes.NewCipher(aesKey[:])
+	block, err := aes.NewCipher(aesKey)
 	if err != nil {
 		panic(err)
 	}
